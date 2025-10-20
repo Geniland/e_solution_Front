@@ -7,6 +7,7 @@ import VoteSuccess from '../pages/VoteSuccess.vue';
 import MyVotes from '../pages/MyVotes.vue';
 import CreateCategories from '../pages/CreateCategories.vue';
 import Register from '../pages/Register.vue';
+import CandidateForm from '../components/CandidateForm.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -17,7 +18,13 @@ const routes = [
   { path: '/my-votes', component: MyVotes },
   { path: '/Create-Categories', component: CreateCategories },
   { path: '/Register', component: Register },
+  { path: '/candidates/create', component: CandidateForm },
 ];
+
+
+
+
+
 
 export default createRouter({
   history: createWebHistory(),

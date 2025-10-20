@@ -1,36 +1,71 @@
 <template>
   <div class="app-container">
-    <!-- Barre de navigation -->
     <header class="navbar">
       <div class="logo">🗳️ E-Vote</div>
+
       <nav class="nav-links">
         <router-link to="/" exact-active-class="active">Accueil</router-link>
         <router-link to="/my-votes" exact-active-class="active">Mes Votes</router-link>
-        <router-link to="/login" exact-active-class="active">Connexion</router-link>
+
+        <!-- 👇 Liens visibles uniquement pour les admin -->
+        <template v-if="isAdmin">
+          <router-link to="/Create-Categories" exact-active-class="active">Catégories</router-link>
+          <router-link to="/candidates/create" exact-active-class="active">Candidats</router-link>
+        </template>
+
+        <router-link to="/register" exact-active-class="active">Enregistrement</router-link>
+
+        <!-- ✅ Si utilisateur connecté -->
+        <div v-if="user" class="user-info">
+          👤 <strong>{{ user.name || user.email }}</strong>
+          <button class="logout-btn" @click="logout">Déconnexion</button>
+        </div>
+
+        <!-- ✅ Si non connecté -->
+        <router-link v-else to="/login" exact-active-class="active">
+          Connexion
+        </router-link>
       </nav>
     </header>
 
-    <!-- Contenu des pages -->
     <main class="main-content">
       <router-view />
     </main>
 
-    <!-- Pied de page -->
     <footer class="footer">
       <p>&copy; 2025 Plateforme de Vote Sécurisée | Tous droits réservés</p>
     </footer>
   </div>
 </template>
 
+<script setup>
+import { ref, computed, provide } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// ✅ user devient réactif
+const user = ref(JSON.parse(localStorage.getItem('user')))
+
+// ✅ rendre user accessible dans toute l’app
+provide('user', user)
+
+const isAdmin = computed(() => user.value && user.value.role === 'admin')
+
+function logout() {
+  user.value = null
+  localStorage.removeItem('user')
+  localStorage.removeItem('token')
+  router.push('/login')
+}
+</script>
+
 <style scoped>
 .app-container {
-  /* display: flex; */
   flex-direction: column;
   min-height: 100vh;
-  /* background-color: #f5f7fa; */
   font-family: 'Segoe UI', sans-serif;
 }
-
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -39,41 +74,42 @@
   padding: 1rem 2rem;
   color: #fff;
 }
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
 .nav-links {
   display: flex;
   gap: 1.5rem;
+  align-items: center;
 }
-
 .nav-links a {
   color: #fff;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
-
 .nav-links a:hover,
 .nav-links a.active {
   color: #ffdd57;
   text-decoration: underline;
 }
-
-.main-content {
-  flex-grow: 1;
-  
-  max-width: 1000px;
-  margin: 0 auto;
-  background-color: #ffffff;
-  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); */
-  border-radius: 8px;
-  margin-top: 2rem;
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #ffdd57;
 }
-
+.logout-btn {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  cursor: pointer;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: 0.3s;
+}
+.logout-btn:hover {
+  background: white;
+  color: #1e3a8a;
+}
 .footer {
   background-color: #4c4f58;
   color: #fff;

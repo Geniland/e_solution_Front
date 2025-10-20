@@ -60,6 +60,12 @@
               <p class="text-sm text-gray-500">📞 {{ candidate.phone }}</p>
               <p class="text-sm text-gray-500">Position #{{ candidate.position_number }}</p>
 
+
+              <!-- Affichage du nombre de votes -->
+              <div class="votes-badge">
+                🗳️ {{ candidate.votes_count }} vote<span v-if="candidate.votes_count > 1">s</span>
+              </div>
+
               <!-- Actions -->
               <div class="flex justify-between items-center mt-4">
                 <a 
@@ -132,3 +138,16 @@ onMounted(() => {
   fetchCategories()
 })
 </script>
+
+<style scoped>
+
+  .votes-badge {
+  margin-top: 0.5rem;
+  font-weight: bold;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: inline-block;
+}
+</style>

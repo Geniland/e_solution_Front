@@ -5,9 +5,9 @@ import router from './router'
 
 createApp(App).use(router).mount('#app');
 
-if (!localStorage.getItem('visitor_token')) {
+if (!localStorage.getItem('token')) {
   localStorage.setItem(
-    'visitor_token',
+    'token',
     'VT-' + Math.random().toString(36).substring(2)
   );
 }

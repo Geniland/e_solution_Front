@@ -1,5 +1,5 @@
 <template>
     <div>
-        template my vote
+        template my vote en cours de creation
     </div>
 </template>

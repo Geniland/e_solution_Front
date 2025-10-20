@@ -55,23 +55,6 @@
       >
         Payer et voter
       </button>
-
-      <!-- Iframe FedaPay -->
-      <div v-if="paymentUrl" class="mt-6 relative border rounded-xl shadow-lg overflow-hidden">
-        <button
-          @click="paymentUrl = null"
-          class="absolute top-2 right-2 bg-red-500 text-white text-sm px-2 py-1 rounded-lg hover:bg-red-600"
-        >
-          Fermer
-        </button>
-        <iframe
-          :src="paymentUrl"
-          width="100%"
-          height="600"
-          frameborder="0"
-          class="rounded-b-xl"
-        ></iframe>
-      </div>
     </div>
   </div>
 </template>
@@ -88,7 +71,6 @@ export default {
       votes: 1,
       amountPerVote: null,
       totalAmount: null,
-      paymentUrl: null,
     };
   },
   methods: {
@@ -107,7 +89,11 @@ export default {
         this.amountPerVote = response.data.amount_per_vote;
         this.totalAmount = response.data.total_amount;
 
-        this.paymentUrl = response.data.payment_url;
+        // Rediriger directement l’utilisateur vers la page de paiement
+        if (response.data.payment_url) {
+          window.location.href = response.data.payment_url; // redirection dans même onglet
+          // ou window.open(response.data.payment_url, "_blank"); // si tu préfères nouvel onglet
+        }
       } catch (err) {
         alert(err.response?.data?.message || "Erreur lors du paiement");
       }
