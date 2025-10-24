@@ -46,11 +46,28 @@ const register = async () => {
   loading.value = true
 
   try {
-    await axios.get('http://127.0.0.1:8080/sanctum/csrf-cookie')
-    axios.defaults.withCredentials = true
-    await axios.post('/register', form.value)
-    router.push('/CreateCategories') // ou redirection vers login
+    // Étape 1 : Obtenir le cookie CSRF
+    await axios.get('http://127.0.0.1:8000/sanctum/csrf-cookie', {
+      withCredentials: true,
+    })
+
+    // Étape 2 : Envoi du formulaire
+    await axios.post('/register', form.value, {
+      withCredentials: true,
+    })
+
+    // Étape 3 : Récupération du user connecté
+    const { data: user } = await axios.get('/user', {
+      withCredentials: true,
+    })
+
+    // Étape 4 : Sauvegarde du user
+    localStorage.setItem('user', JSON.stringify(user))
+
+    // Rediriger vers l’accueil
+    router.push('/login')
   } catch (e) {
+    console.error(e)
     if (e.response?.data?.errors) {
       error.value = Object.values(e.response.data.errors).flat().join('\n')
     } else {
@@ -60,6 +77,7 @@ const register = async () => {
     loading.value = false
   }
 }
+
 </script>
 
 <style scoped>

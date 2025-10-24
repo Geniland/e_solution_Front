@@ -39,8 +39,9 @@
 </template>
 
 <script setup>
-import { ref, computed, provide } from 'vue'
+import { ref, computed, provide, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios' // ✅ Import de ton instance Axios configurée
 
 const router = useRouter()
 
@@ -50,9 +51,31 @@ const user = ref(JSON.parse(localStorage.getItem('user')))
 // ✅ rendre user accessible dans toute l’app
 provide('user', user)
 
+// ✅ Vérifier si l’utilisateur est admin
 const isAdmin = computed(() => user.value && user.value.role === 'admin')
 
-function logout() {
+// ✅ Vérifier la session à chaque rechargement
+onMounted(async () => {
+  try {
+    const { data } = await axios.get('/user', {
+      withCredentials: true,
+    })
+    user.value = data
+    localStorage.setItem('user', JSON.stringify(data))
+  } catch {
+    user.value = null
+    localStorage.removeItem('user')
+  }
+})
+
+// ✅ Déconnexion
+async function logout() {
+  try {
+    await axios.post('/logout', {}, { withCredentials: true })
+  } catch (e) {
+    console.warn('Erreur lors de la déconnexion', e)
+  }
+
   user.value = null
   localStorage.removeItem('user')
   localStorage.removeItem('token')
