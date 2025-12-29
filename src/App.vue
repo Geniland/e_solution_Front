@@ -6,14 +6,26 @@
       </div>
 
       <!-- BOUTON MENU BURGER -->
-      <button class="burger" @click="isMenuOpen = !isMenuOpen">
+      <!-- <button class="burger" @click="isMenuOpen = !isMenuOpen">
         <span></span><span></span><span></span>
+      </button> -->
+
+      <button
+        class="burger"
+        :class="{ active: isMenuOpen }"
+        @click="isMenuOpen = !isMenuOpen"
+        aria-label="Menu"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
+
 
       <!-- NAVIGATION -->
       <nav :class="['nav-links', { open: isMenuOpen }]">
         <router-link to="/" exact-active-class="active" @click="closeMenu">Accueil</router-link>
-        <router-link to="/my-votes" exact-active-class="active" @click="closeMenu">Mes Votes</router-link>
+        <!-- <router-link to="/my-votes" exact-active-class="active" @click="closeMenu">Mes Votes</router-link> -->
 
         <!-- ADMIN -->
         <template v-if="isAdmin">
@@ -21,7 +33,15 @@
           <router-link to="/candidates/create" exact-active-class="active" @click="closeMenu">Candidats</router-link>
         </template>
 
-        <router-link to="/register" exact-active-class="active" @click="closeMenu">Enregistrement</router-link>
+        <router-link
+        v-if="!user"
+        to="/register"
+        exact-active-class="active"
+        @click="closeMenu"
+      >
+        Enregistrement
+      </router-link>
+
 
         <!-- USER CONNECTÉ -->
         <div v-if="user" class="user-info">
@@ -49,46 +69,59 @@
 <script setup>
 import { ref, computed, provide, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from './axios' // ⚠️ ton axios configuré
 
 const router = useRouter()
 
-// utilisateur
-const user = ref(JSON.parse(localStorage.getItem('user')))
+// 🔐 token = source de vérité
+const token = ref(localStorage.getItem('token'))
+
+// 👤 utilisateur (null par défaut)
+const user = ref(null)
 provide('user', user)
 
-// admin ?
-const isAdmin = computed(() => user.value && user.value.role === 'admin')
+// 🛡 admin
+const isAdmin = computed(() => user.value?.role === 'admin')
 
-// menu burger
+// 🍔 menu burger
 const isMenuOpen = ref(false)
-function closeMenu() {
-  isMenuOpen.value = false
-}
+const closeMenu = () => (isMenuOpen.value = false)
 
-// vérification session
+// 🔄 au chargement
 onMounted(async () => {
+  if (!token.value) {
+    user.value = null
+    return
+  }
+
   try {
-    const { data } = await axios.get('/user', { withCredentials: true })
+    // injecter token
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+
+    // 🔥 route protégée token (ex: /me)
+    const { data } = await axios.get('/me')
     user.value = data
     localStorage.setItem('user', JSON.stringify(data))
-  } catch {
-    user.value = null
-    localStorage.removeItem('user')
+  } catch (e) {
+    // token invalide
+    logout()
   }
 })
 
-// logout
-async function logout() {
-  try {
-    await axios.post('/logout', {}, { withCredentials: true })
-  } catch {}
-
+// 🚪 logout
+function logout() {
   user.value = null
-  localStorage.clear()
+  token.value = null
+
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+
+  delete axios.defaults.headers.common['Authorization']
+
   router.push('/login')
 }
 </script>
+
 
 <style scoped>
 .app-container {
@@ -98,18 +131,30 @@ async function logout() {
 }
 
 /* HEADER */
+/* HEADER */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: #1e3a8a;
-  padding: 1rem 2rem;
+  padding: 0 2rem;       /* padding horizontal uniquement */
+  height: 80px;          /* hauteur fixe du menu */
   color: #fff;
+  position: relative;    /* pour le menu burger en responsive */
+}
+
+/* LOGO */
+.logo {
+  height: 130%;           /* s'adapte à la hauteur de la navbar */
+  display: flex;
+  align-items: center;    /* centrer verticalement */
 }
 
 .logo img {
-  height: 55px;
+  max-height: 130%;       /* s’adapte à la hauteur de la navbar sans la dépasser */
+  width: auto;            /* garde les proportions */
 }
+
 
 /* NAVIGATION DESKTOP */
 .nav-links {
@@ -154,22 +199,56 @@ async function logout() {
 }
 
 /* BUTTON BURGER */
+/* BURGER BUTTON */
 .burger {
   display: none;
-  flex-direction: column;
+  position: relative;
   width: 32px;
   height: 22px;
-  justify-content: space-between;
-  background: #fff;
-  border:#fff;
+  background: transparent;
+  border: none;
   cursor: pointer;
 }
+
+/* traits */
 .burger span {
-  height: 4px;
+  position: absolute;
+  left: 0;
   width: 100%;
-  background: white;
-  border-radius: 5px;
+  height: 4px;
+  background-color: #fff;
+  border-radius: 4px;
+  transition: 0.3s ease;
 }
+
+/* positions initiales */
+.burger span:nth-child(1) {
+  top: 0;
+}
+
+.burger span:nth-child(2) {
+  top: 9px;
+}
+
+.burger span:nth-child(3) {
+  top: 18px;
+}
+
+/* ÉTAT ACTIF (✖) */
+.burger.active span:nth-child(1) {
+  transform: rotate(45deg);
+  top: 9px;
+}
+
+.burger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.burger.active span:nth-child(3) {
+  transform: rotate(-45deg);
+  top: 9px;
+}
+
 
 /* RESPONSIVE */
 @media (max-width: 850px) {
@@ -207,107 +286,3 @@ async function logout() {
 </style>
 
 
-<!-- <script setup>
-import { ref, computed, provide, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios' // ✅ Import de ton instance Axios configurée
-
-const router = useRouter()
-
-// ✅ user devient réactif
-const user = ref(JSON.parse(localStorage.getItem('user')))
-
-// ✅ rendre user accessible dans toute l’app
-provide('user', user)
-
-// ✅ Vérifier si l’utilisateur est admin
-const isAdmin = computed(() => user.value && user.value.role === 'admin')
-
-// ✅ Vérifier la session à chaque rechargement
-onMounted(async () => {
-  try {
-    const { data } = await axios.get('/user', {
-      withCredentials: true,
-    })
-    user.value = data
-    localStorage.setItem('user', JSON.stringify(data))
-  } catch {
-    user.value = null
-    localStorage.removeItem('user')
-  }
-})
-
-// ✅ Déconnexion
-async function logout() {
-  try {
-    await axios.post('/logout', {}, { withCredentials: true })
-  } catch (e) {
-    console.warn('Erreur lors de la déconnexion', e)
-  }
-
-  user.value = null
-  localStorage.removeItem('user')
-  localStorage.removeItem('token')
-  router.push('/login')
-}
-</script>
-
-<style scoped>
-.app-container {
-  flex-direction: column;
-  min-height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
-}
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #1e3a8a;
-  padding: 1rem 2rem;
-  color: #fff;
-}
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-.nav-links a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-.nav-links a:hover,
-.nav-links a.active {
-  color: #ffdd57;
-  text-decoration: underline;
-}
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #ffdd57;
-}
-.logout-btn {
-  background: transparent;
-  border: 1px solid white;
-  color: white;
-  cursor: pointer;
-  padding: 0.3rem 0.8rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: 0.3s;
-}
-.logout-btn:hover {
-  background: white;
-  color: #1e3a8a;
-}
-.footer {
-  background-color: #4c4f58;
-  color: #fff;
-  text-align: center;
-  padding: 1rem 0;
-  font-size: 0.9rem;
-  margin-top: auto;
-}
-</style> -->

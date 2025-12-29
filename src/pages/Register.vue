@@ -28,16 +28,19 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from '../axios';
+import axios from '../axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
 const form = ref({
   name: '',
   email: '',
   password: '',
-  password_confirmation: ''
+  password_confirmation: '',
+  role: 'user', // facultatif selon ton backend
 })
+
 const error = ref('')
 const loading = ref(false)
 
@@ -46,39 +49,34 @@ const register = async () => {
   loading.value = true
 
   try {
-    // Étape 1 : Obtenir le cookie CSRF
-    await axios.get('http://127.0.0.1:8000/sanctum/csrf-cookie', {
-      withCredentials: true,
-    })
+    // 🔥 APPEL DIRECT COMME POSTMAN
+    const res = await axios.post('/register', form.value)
 
-    // Étape 2 : Envoi du formulaire
-    await axios.post('/register', form.value, {
-      withCredentials: true,
-    })
+    const { token, user } = res.data
 
-    // Étape 3 : Récupération du user connecté
-    const { data: user } = await axios.get('/user', {
-      withCredentials: true,
-    })
-
-    // Étape 4 : Sauvegarde du user
+    // 🔐 Stocker token + user
+    localStorage.setItem('token', token)
     localStorage.setItem('user', JSON.stringify(user))
 
-    // Rediriger vers l’accueil
-    router.push('/login')
+    // 🧠 Injecter le token globalement
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+    // 🚀 Redirection
+    router.push('/')
   } catch (e) {
-    console.error(e)
     if (e.response?.data?.errors) {
       error.value = Object.values(e.response.data.errors).flat().join('\n')
+    } else if (e.response?.data?.message) {
+      error.value = e.response.data.message
     } else {
-      error.value = 'Erreur lors de l’inscription.'
+      error.value = 'Erreur lors de l’inscription'
     }
   } finally {
     loading.value = false
   }
 }
-
 </script>
+
 
 <style scoped>
 .auth-container {

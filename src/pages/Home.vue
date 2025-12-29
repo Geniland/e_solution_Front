@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gray-50 text-gray-800">
     <header class="bg-gradient-to-r from-purple-700 to-yellow-500 p-6 text-white text-center">
-      <h1 class="text-3xl font-bold">E_SOLUTION - Système de Vote & Vente de ticket</h1>
+      <h1 class="text-3xl font-bold">DigitalAreas - Système de Vote & Vente de ticket</h1>
       <p class="mt-2 text-sm">Votez pour vos talents préférés dans chaque catégorie !</p>
     </header>
 
@@ -119,8 +119,9 @@ const formatDate = (date) => {
 // Construire l'URL image
 const imageUrl = (path) => {
   if (!path) return 'https://via.placeholder.com/300x200?text=Pas+d%27image'
-  return `http://localhost:8000/storage/${path}`
+  return `${import.meta.env.VITE_ASSET_URL}/storage/${path}`
 }
+
 
 // Récupération des catégories depuis l'API
 const fetchCategories = async () => {
