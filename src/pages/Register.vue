@@ -3,87 +3,157 @@
     <div class="auth-card">
       <h2>Créer un compte</h2>
 
-      <form @submit.prevent="register">
+      <form @submit.prevent="register" novalidate>
+        <!-- NOM -->
         <label>Nom</label>
-        <input v-model="form.name" type="text" required />
+        <input
+          v-model.trim="form.name"
+          type="text"
+          placeholder="Votre nom"
+          required
+        />
 
+        <!-- EMAIL -->
         <label>Email</label>
-        <input v-model="form.email" type="email" required />
+        <input
+          v-model.trim="form.email"
+          type="email"
+          placeholder="email@exemple.com"
+          required
+        />
 
+        <!-- PASSWORD -->
         <label>Mot de passe</label>
-        <input v-model="form.password" type="password" required />
+        <input
+          v-model="form.password"
+          type="password"
+          placeholder="********"
+          required
+        />
 
+        <!-- CONFIRMATION -->
         <label>Confirmation du mot de passe</label>
-        <input v-model="form.password_confirmation" type="password" required />
+        <input
+          v-model="form.password_confirmation"
+          type="password"
+          placeholder="********"
+          required
+        />
 
+        <!-- BOUTON -->
         <button type="submit" :disabled="loading">
-          {{ loading ? "Inscription..." : "S'inscrire" }}
+          <span v-if="loading">Inscription en cours...</span>
+          <span v-else>S'inscrire</span>
         </button>
 
-        <p v-if="error" class="error">{{ error }}</p>
+        <!-- ERREUR -->
+        <p v-if="error" class="error">
+          {{ error }}
+        </p>
+
+        <!-- SUCCÈS -->
+        <p v-if="success" class="success">
+          ✅ Inscription réussie. Redirection…
+        </p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import axios from '../axios'
+import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from '../axios'
 
 const router = useRouter()
+const user = inject('user', null) // optionnel si partagé dans App.vue
+
+const loading = ref(false)
+const error = ref('')
+const success = ref(false)
 
 const form = ref({
   name: '',
   email: '',
   password: '',
   password_confirmation: '',
-  role: 'user', // facultatif selon ton backend
+  role: 'user', // conforme à ton backend
 })
 
-const error = ref('')
-const loading = ref(false)
-
+/* -------------------------------
+   INSCRIPTION
+--------------------------------*/
 const register = async () => {
   error.value = ''
+  success.value = false
+
+  // 🔎 Validation frontend minimale
+  if (form.value.password !== form.value.password_confirmation) {
+    error.value = 'Les mots de passe ne correspondent pas.'
+    return
+  }
+
   loading.value = true
 
   try {
-    // 🔥 APPEL DIRECT COMME POSTMAN
+    // 🔥 Appel API (comme Postman)
     const res = await axios.post('/register', form.value)
 
-    const { token, user } = res.data
+    const { token, user: apiUser } = res.data
 
-    // 🔐 Stocker token + user
+    // 🔐 Stockage
     localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('user', JSON.stringify(apiUser))
 
-    // 🧠 Injecter le token globalement
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    // 🧠 Injecter token globalement
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`
 
-    // 🚀 Redirection
-    router.push('/')
-  } catch (e) {
-    if (e.response?.data?.errors) {
-      error.value = Object.values(e.response.data.errors).flat().join('\n')
-    } else if (e.response?.data?.message) {
-      error.value = e.response.data.message
-    } else {
-      error.value = 'Erreur lors de l’inscription'
+    // 🧩 Mise à jour user global si présent
+    if (user) {
+      user.value = apiUser
     }
+
+    success.value = true
+
+    // ⏳ Petite pause UX
+    setTimeout(() => {
+      router.push('/')
+    }, 800)
+
+  } catch (err) {
+    console.error('Erreur register:', err)
+
+    // 🧠 Gestion propre des erreurs Laravel
+    if (!err.response) {
+      error.value = 'Impossible de contacter le serveur. Vérifiez votre connexion.'
+    }
+    else if (err.response.status === 422) {
+      error.value = Object.values(err.response.data.errors || {})
+        .flat()
+        .join('\n')
+    }
+    else if (err.response.status === 401) {
+      error.value = 'Non autorisé.'
+    }
+    else if (err.response.status === 500) {
+      error.value = 'Erreur serveur. Réessayez plus tard.'
+    }
+    else {
+      error.value = err.response.data?.message || 'Erreur lors de l’inscription.'
+    }
+
   } finally {
     loading.value = false
   }
 }
 </script>
 
-
 <style scoped>
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #f3f4f6;
 }
 
@@ -114,13 +184,12 @@ input {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
-  margin-bottom: 0.5rem;
 }
 
 button {
   width: 100%;
   padding: 0.75rem;
-  margin-top: 1rem;
+  margin-top: 1.2rem;
   background-color: #10b981;
   color: white;
   border: none;
@@ -130,7 +199,12 @@ button {
   transition: background-color 0.2s;
 }
 
-button:hover {
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
   background-color: #059669;
 }
 
@@ -139,5 +213,12 @@ button:hover {
   margin-top: 1rem;
   text-align: center;
   white-space: pre-wrap;
+}
+
+.success {
+  color: #059669;
+  margin-top: 1rem;
+  text-align: center;
+  font-weight: 600;
 }
 </style>

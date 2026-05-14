@@ -1,0 +1,63 @@
+password:esolutionpass
+database user : digitalareas_user
+
+FTPuser
+CnGhrFi#64
+
+
+FileZilla (SFTP)
+hote:vps117058.serveur-vps.net
+user name:defaultdigitalareas
+4vdnAG@5A               fillzilar WEB VRAI
+
+
+
+digitalareasapi
+bv@oAkXU62
+
+shell User
+
+genilanddigitalareasz
+NTVMbkgt8# 
+
+genilandapi
+ojSKZ8@q3
+
+
+user ftp api
+genilandftpapi
+txvaTeAN7#W9    fillezillar API vrai
+
+genilandapi
+7uceY7!RE
+
+genilandtest
+M!3saEL7s
+
+
+fedapay account
+GenilandeE@gmail.com
+GenilandeE5626Digital
+
+
+053704
+327290
+848013
+731030
+856914
+640340
+734994
+686396
+463070
+050411
+236178
+779338
+
+email
+nnaya7728@gmail.com
+GenilandeE5626
+
+
+ISP config
+admin
+M6u0X7I3B1g2Z9Z
